@@ -1,0 +1,45 @@
+version: '3'
+services:
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.7.14-management
+    ports:
+    - 15672:15672
+    networks:
+      - pipeline_net
+
+  reader:
+    container_name: reader
+    image: reader:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REVIEWS_PATH=/data/yelp_academic_dataset_reviews.json
+      - REVIEWS_MESSAGE_SIZE=100
+      - REVIEWS_BY_DAY_QUEUE=by_day_queue
+    volumes:
+    - "./reduced_data/reviews:/data"
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+    networks:
+      - pipeline_net
+
+  aggregator:
+    container_name: aggregator
+    image: aggregator:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REVIEWS_BY_DAY_QUEUE=by_day_queue
+    restart: on-failure
+    networks:
+      - pipeline_net
+
+
+networks:
+  pipeline_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.25.128.0/24
