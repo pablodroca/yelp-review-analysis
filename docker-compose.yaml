@@ -17,6 +17,7 @@ services:
       - REVIEWS_PATH=/data/yelp_academic_dataset_reviews.json
       - REVIEWS_MESSAGE_SIZE=100
       - REVIEWS_BY_DAY_QUEUE=by_day_queue
+      - REVIEWS_BY_DAY_AGGREGATORS=2
     volumes:
     - "./reduced_data/reviews:/data"
     depends_on:
@@ -25,13 +26,39 @@ services:
     networks:
       - pipeline_net
 
-  aggregator:
-    container_name: aggregator
+  aggregator_1:
+    container_name: aggregator_1
     image: aggregator:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - REVIEWS_BY_DAY_QUEUE=by_day_queue
+      - SOURCE_QUEUE=by_day_queue
+      - REDUCER_QUEUE=by_day_reducer_queue
+    restart: on-failure
+    networks:
+      - pipeline_net
+
+  aggregator_2:
+    container_name: aggregator_2
+    image: aggregator:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SOURCE_QUEUE=by_day_queue
+      - REDUCER_QUEUE=by_day_reducer_queue
+    restart: on-failure
+    networks:
+      - pipeline_net
+
+  reducer:
+    container_name: reducer
+    image: reducer:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - AGGREGATED_DATA_QUEUE=by_day_reducer_queue
+      - SINK_QUEUE=sink_queue
+      - AGGREGATORS_QUANTITY=2
     restart: on-failure
     networks:
       - pipeline_net

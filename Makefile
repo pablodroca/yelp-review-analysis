@@ -7,6 +7,7 @@ all:
 docker-image:
 	docker build -f ./reader/Dockerfile -t "reader:latest" .
 	docker build -f ./aggregator/Dockerfile -t "aggregator:latest" .
+	docker build -f ./reducer/Dockerfile -t "reducer:latest" .
 .PHONY: docker-image
 
 docker-compose-up: docker-image

@@ -5,7 +5,8 @@ from aggregator import Aggregator
 
 def parse_config_params():
     params = {
-        'reviews_by_day_queue': os.environ['REVIEWS_BY_DAY_QUEUE'],
+        'source_queue': os.environ['SOURCE_QUEUE'],
+        'reducer_queue': os.environ['REDUCER_QUEUE']
     }
     return params
 
@@ -13,8 +14,8 @@ def main():
     initialize_log()
     logging.info("Starting aggregator")
     config_params = parse_config_params()
-    reader = Aggregator(config_params['reviews_by_day_queue'])
-    reader.start()
+    aggregator = Aggregator(config_params['source_queue'], config_params['reducer_queue'])
+    aggregator.start()
 
 
 def initialize_log():
