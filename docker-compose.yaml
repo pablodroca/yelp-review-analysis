@@ -63,6 +63,23 @@ services:
     networks:
       - pipeline_net
 
+  joiner:
+    container_name: joiner
+    image: joiner:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SOURCE_QUEUE=funny_reviews_queue
+      - REDUCER_QUEUE=joined_funny_reviews_reducer_queue
+      - FILE_PATH_TO_JOIN=/data/yelp_academic_dataset_business.json
+      - JOIN_FIELD=business_id
+      - TABLE_FIELDS=[business_id, city]
+    restart: on-failure
+    volumes:
+    - "./data/business:/data"
+    networks:
+      - pipeline_net
+
 
 networks:
   pipeline_net:
