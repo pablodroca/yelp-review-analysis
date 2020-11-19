@@ -1,6 +1,8 @@
 import os
 import logging
 
+from multiprocessing import Process
+
 from reader import Reader
 
 
@@ -8,19 +10,29 @@ def parse_config_params():
     params = {
         'reviews_path': os.environ['REVIEWS_PATH'],
         'reviews_message_size': int(os.environ['REVIEWS_MESSAGE_SIZE']),
-        'reviews_by_day_queue': os.environ['REVIEWS_BY_DAY_QUEUE'],
-        'reviews_by_day_aggregators': int(os.environ['REVIEWS_BY_DAY_AGGREGATORS'])
+        'reviews_queue': os.environ['REVIEWS_QUEUE'],
+        'business_path': os.environ['BUSINESS_PATH'],
+        'business_message_size': int(os.environ['BUSINESS_MESSAGE_SIZE']),
+        'business_queue': os.environ['BUSINESS_QUEUE'],
     }
     return params
 
 
+def launch_business_reader(business_path, business_message_size, business_queue):
+    reader = Reader(business_path, business_message_size, business_queue)
+    reader.start()
+
+
 def main():
     initialize_log()
-    logging.info("Starting reader")
+    logging.info("Starting client.")
     config_params = parse_config_params()
-    logging.info("Reviews data is located at: {}".format(config_params['reviews_path']))
+    business_reader_process = Process(target=launch_business_reader, args=(
+        config_params['business_path'], config_params['business_message_size'], config_params['business_queue']
+    ))
+    business_reader_process.start()
     reader = Reader(config_params['reviews_path'], config_params['reviews_message_size'],
-                    config_params['reviews_by_day_queue'], config_params['reviews_by_day_aggregators'])
+                    config_params['reviews_queue'])
     reader.start()
 
 

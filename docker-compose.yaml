@@ -14,14 +14,44 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - REVIEWS_PATH=/data/yelp_academic_dataset_reviews.json
+      - REVIEWS_PATH=/data_reviews/yelp_academic_dataset_reviews.json
       - REVIEWS_MESSAGE_SIZE=100
-      - REVIEWS_BY_DAY_QUEUE=by_day_queue
-      - REVIEWS_BY_DAY_AGGREGATORS=2
+      - REVIEWS_QUEUE=reviews_queue
+      - BUSINESS_PATH=/data_reviews/yelp_academic_dataset_reviews.json
+      - BUSINESS_MESSAGE_SIZE=100
+      - BUSINESS_QUEUE=business_queue
     volumes:
-    - "./reduced_data/reviews:/data"
+    - "./reduced_data/reviews:/data_reviews"
+    - "./data/business:/data_business"
     depends_on:
       - rabbitmq
+    restart: on-failure
+    networks:
+      - pipeline_net
+
+  business_controller:
+    container_name: business_controller
+    image: business_controller:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - BUSINESS_QUEUE=business_queue
+      - BUSINESS_EXCHANGE=business_exchange
+      - BUSINESS_MESSAGE_SIZE=1025
+    restart: on-failure
+    networks:
+      - pipeline_net
+
+  review_controller:
+    container_name: review_controller
+    image: review_controller:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REVIEWS_QUEUE=reviews_queue
+      - WEEKDAY_QUEUE=weekday_queue
+      - WEEKDAY_AGGREGATORS_QUANTITY=2
+      - REVIEWS_MESSAGE_SIZE=1025
     restart: on-failure
     networks:
       - pipeline_net
@@ -32,8 +62,8 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - SOURCE_QUEUE=by_day_queue
-      - REDUCER_QUEUE=by_day_reducer_queue
+      - SOURCE_QUEUE=weekday_queue
+      - REDUCER_QUEUE=weekday_reducer_queue
     restart: on-failure
     networks:
       - pipeline_net
@@ -44,8 +74,8 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - SOURCE_QUEUE=by_day_queue
-      - REDUCER_QUEUE=by_day_reducer_queue
+      - SOURCE_QUEUE=weekday_queue
+      - REDUCER_QUEUE=weekday_reducer_queue
     restart: on-failure
     networks:
       - pipeline_net
@@ -56,7 +86,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - AGGREGATED_DATA_QUEUE=by_day_reducer_queue
+      - AGGREGATED_DATA_QUEUE=weekday_reducer_queue
       - SINK_QUEUE=sink_queue
       - AGGREGATORS_QUANTITY=2
     restart: on-failure
@@ -69,14 +99,8 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - SOURCE_QUEUE=funny_reviews_queue
-      - REDUCER_QUEUE=joined_funny_reviews_reducer_queue
-      - FILE_PATH_TO_JOIN=/data/yelp_academic_dataset_business.json
-      - JOIN_FIELD=business_id
-      - TABLE_FIELDS=[business_id, city]
+      - CRITICAL_DATA_EXCHANGE=business_exchange
     restart: on-failure
-    volumes:
-    - "./data/business:/data"
     networks:
       - pipeline_net
 
