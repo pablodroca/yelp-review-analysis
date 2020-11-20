@@ -1,5 +1,6 @@
 import os
 import logging
+import pika
 
 from multiprocessing import Process
 
@@ -14,13 +15,15 @@ def parse_config_params():
         'business_path': os.environ['BUSINESS_PATH'],
         'business_message_size': int(os.environ['BUSINESS_MESSAGE_SIZE']),
         'business_routing_key': os.environ['BUSINESS_ROUTING_KEY'],
-        'exchange_requests': os.environ['EXCHANGE_REQUESTS']
+        'exchange_business': os.environ['EXCHANGE_INCOMING_BUSINESS'],
+        'exchange_reviews': os.environ['EXCHANGE_INCOMING_REVIEWS']
     }
     return params
 
 
-def launch_business_reader(business_path, business_message_size, business_queue):
-    reader = Reader(business_path, business_message_size, business_queue)
+def launch_business_reader(business_path, business_message_size, business_queue,
+                           exchange_business):
+    reader = Reader(business_path, business_message_size, business_queue, exchange_business, None)
     reader.start()
 
 
@@ -28,14 +31,19 @@ def main():
     initialize_log()
     logging.info("Starting client.")
     config_params = parse_config_params()
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters(host='rabbitmq')
+    )
     business_reader_process = Process(target=launch_business_reader, args=(
         config_params['business_path'], config_params['business_message_size'],
-        config_params['business_routing_key'], config_params['exchange_requests']
+        config_params['business_routing_key'], config_params['exchange_business'],
     ))
     business_reader_process.start()
     reader = Reader(config_params['reviews_path'], config_params['reviews_message_size'],
-                    config_params['reviews_routing_key'], config_params['exchange_requests'])
+                    config_params['reviews_routing_key'], config_params['exchange_reviews'], connection)
     reader.start()
+    business_reader_process.join()
+    connection.close()
 
 
 def initialize_log():

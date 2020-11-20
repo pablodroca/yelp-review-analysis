@@ -1,14 +1,12 @@
 import json
 import pika
-
+import logging
 
 class Reader:
-    def __init__(self, path, message_size, data_routing_key, exchange_requests):
+    def __init__(self, path, message_size, data_routing_key, exchange_requests, connection):
         self._path = path
         self._message_size = message_size
-        self._connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq')
-        )
+        self._connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
         self._channel = self._connection.channel()
         self._data_routing_key = data_routing_key
         self._channel.exchange_declare(exchange=exchange_requests, exchange_type='direct')
@@ -37,7 +35,10 @@ class Reader:
             properties=pika.BasicProperties(delivery_mode=2)
         )
 
+        logging.info("Finishing sending data to routing key: {}.".format(self._data_routing_key))
+
     def start(self):
+        logging.info("Starting to send data from file: {}.".format(self._path))
         with open(self._path, 'r') as data_file:
             current_register = data_file.readline().rstrip()
             current_registers = []
@@ -53,4 +54,3 @@ class Reader:
                 self._send_registers(current_registers)
 
         self._send_flush_notification()
-        self._connection.close()

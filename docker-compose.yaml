@@ -17,10 +17,11 @@ services:
       - REVIEWS_PATH=/data_reviews/yelp_academic_dataset_reviews.json
       - REVIEWS_MESSAGE_SIZE=100
       - REVIEWS_ROUTING_KEY=reviews_queue
-      - BUSINESS_PATH=/data_reviews/yelp_academic_dataset_reviews.json
+      - BUSINESS_PATH=/data_business/yelp_academic_dataset_business.json
       - BUSINESS_MESSAGE_SIZE=100
       - BUSINESS_ROUTING_KEY=business_queue
-      - EXCHANGE_REQUESTS=exchange_requests
+      - EXCHANGE_INCOMING_BUSINESS=exchange_incoming_business
+      - EXCHANGE_INCOMING_REVIEWS=exchange_incoming_reviews
     volumes:
     - "./reduced_data/reviews:/data_reviews"
     - "./data/business:/data_business"
@@ -39,7 +40,7 @@ services:
       - BUSINESS_QUEUE=business_queue
       - BUSINESS_EXCHANGE=business_exchange
       - BUSINESS_MESSAGE_SIZE=1025
-      - EXCHANGE_REQUESTS=exchange_requests
+      - EXCHANGE_INCOMING_BUSINESS=exchange_incoming_business
     restart: on-failure
     networks:
       - pipeline_net
@@ -54,7 +55,7 @@ services:
       - WEEKDAY_QUEUE=weekday_queue
       - WEEKDAY_AGGREGATORS_QUANTITY=2
       - REVIEWS_MESSAGE_SIZE=1025
-      - EXCHANGE_REQUESTS=exchange_requests
+      - EXCHANGE_INCOMING_REVIEWS=exchange_incoming_reviews
     restart: on-failure
     networks:
       - pipeline_net

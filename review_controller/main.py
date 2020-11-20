@@ -9,7 +9,7 @@ def parse_config_params():
         'weekday_queue': os.environ['WEEKDAY_QUEUE'],
         'weekday_aggregators_quantity': int(os.environ['WEEKDAY_AGGREGATORS_QUANTITY']),
         'reviews_message_size': int(os.environ['REVIEWS_MESSAGE_SIZE']),
-        'exchange_requests': os.environ['EXCHANGE_REQUESTS']
+        'exchange_incoming_reviews': os.environ['EXCHANGE_INCOMING_REVIEWS']
     }
     return params
 
@@ -19,7 +19,7 @@ def main():
     config_params = parse_config_params()
     aggregator = ReviewController(config_params['reviews_queue'], config_params['weekday_queue'],
                                   config_params['weekday_aggregators_quantity'], config_params['reviews_message_size'],
-                                  config_params['exchange_requests'])
+                                  config_params['exchange_incoming_reviews'])
     aggregator.start()
 
 

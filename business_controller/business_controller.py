@@ -29,7 +29,7 @@ class BusinessController:
         self._send_businesses_to_joiners(self._current_businesses)
         self._current_businesses = []
 
-        data_bytes = bytes(json.dumps({'type:', 'flush'}))
+        data_bytes = bytes(json.dumps({'type:', 'flush'}), encoding='utf-8')
 
         self._business_joiners_channel.basic_publish(
             exchange=self._business_exchange,
@@ -40,7 +40,6 @@ class BusinessController:
         logging.info("Finishing processing businesses data.")
 
     def _send_businesses_to_joiners(self, businesses):
-        logging.info(businesses)
         data_bytes = bytes(json.dumps(
             {'type': 'data',
              'data': [
@@ -77,4 +76,5 @@ class BusinessController:
     def start(self):
         self._business_queue_channel.basic_consume(queue=self._business_queue_name,
                                                    on_message_callback=self._process_data)
+        logging.info("Starting consuming.")
         self._business_queue_channel.start_consuming()

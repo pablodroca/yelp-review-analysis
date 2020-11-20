@@ -21,3 +21,4 @@ class DataReceiver:
 
     def start(self):
         self._channel.basic_consume(queue=self._queue_name, on_message_callback=self._process_data)
+        self._channel.start_consuming()

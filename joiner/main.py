@@ -14,7 +14,7 @@ def parse_config_params():
 
 def main():
     initialize_log()
-    logging.info("Starting reducer.")
+    logging.info("Starting joiner.")
     config_params = parse_config_params()
     data_receiver = DataReceiver(config_params['critical_data_exchange'])
     data_receiver.start()
