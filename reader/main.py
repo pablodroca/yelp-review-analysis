@@ -10,10 +10,11 @@ def parse_config_params():
     params = {
         'reviews_path': os.environ['REVIEWS_PATH'],
         'reviews_message_size': int(os.environ['REVIEWS_MESSAGE_SIZE']),
-        'reviews_queue': os.environ['REVIEWS_QUEUE'],
+        'reviews_routing_key': os.environ['REVIEWS_ROUTING_KEY'],
         'business_path': os.environ['BUSINESS_PATH'],
         'business_message_size': int(os.environ['BUSINESS_MESSAGE_SIZE']),
-        'business_queue': os.environ['BUSINESS_QUEUE'],
+        'business_routing_key': os.environ['BUSINESS_ROUTING_KEY'],
+        'exchange_requests': os.environ['EXCHANGE_REQUESTS']
     }
     return params
 
@@ -28,11 +29,12 @@ def main():
     logging.info("Starting client.")
     config_params = parse_config_params()
     business_reader_process = Process(target=launch_business_reader, args=(
-        config_params['business_path'], config_params['business_message_size'], config_params['business_queue']
+        config_params['business_path'], config_params['business_message_size'],
+        config_params['business_routing_key'], config_params['exchange_requests']
     ))
     business_reader_process.start()
     reader = Reader(config_params['reviews_path'], config_params['reviews_message_size'],
-                    config_params['reviews_queue'])
+                    config_params['reviews_routing_key'], config_params['exchange_requests'])
     reader.start()
 
 

@@ -5,13 +5,17 @@ import pika
 
 
 class BusinessController:
-    def __init__(self, business_queue, business_exchange, business_message_size):
+    def __init__(self, business_queue, business_exchange, business_message_size, exchange_requests):
         self._connection = pika.BlockingConnection(
             pika.ConnectionParameters(host='rabbitmq')
         )
         self._business_queue_channel = self._connection.channel()
+        self._business_queue_channel.exchange_declare(exchange=exchange_requests, exchange_type='direct')
+
         self._business_queue_name = business_queue
         self._business_queue_channel.queue_declare(queue=business_queue)
+        self._business_queue_channel.queue_bind(exchange=exchange_requests, queue=business_queue,
+                                                routing_key=business_queue)
 
         self._business_joiners_channel = self._connection.channel()
         self._business_joiners_channel.exchange_declare(exchange=business_exchange, exchange_type='fanout')

@@ -7,7 +7,8 @@ def parse_config_params():
     params = {
         'business_queue': os.environ['BUSINESS_QUEUE'],
         'business_exchange': os.environ['BUSINESS_EXCHANGE'],
-        'business_message_size': int(os.environ['BUSINESS_MESSAGE_SIZE'])
+        'business_message_size': int(os.environ['BUSINESS_MESSAGE_SIZE']),
+        'exchange_requests': os.environ['EXCHANGE_REQUESTS']
     }
     return params
 
@@ -16,7 +17,7 @@ def main():
     logging.info("Starting aggregator")
     config_params = parse_config_params()
     aggregator = BusinessController(config_params['business_queue'], config_params['business_exchange'],
-                                    config_params['business_message_size'])
+                                    config_params['business_message_size'], config_params['exchange_requests'])
     aggregator.start()
 
 

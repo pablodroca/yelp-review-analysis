@@ -8,6 +8,7 @@ docker-image:
 	docker build -f ./reader/Dockerfile -t "reader:latest" .
 	docker build -f ./business_controller/Dockerfile -t "business_controller:latest" .
 	docker build -f ./review_controller/Dockerfile -t "review_controller:latest" .
+	docker build -f ./aggregator/Dockerfile -t "aggregator:latest" .
 	docker build -f ./joiner/Dockerfile -t "joiner:latest" .
 .PHONY: docker-image
 
