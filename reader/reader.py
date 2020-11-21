@@ -11,6 +11,7 @@ class Reader:
         self._data_routing_key = data_routing_key
         self._channel.exchange_declare(exchange=exchange_requests, exchange_type='direct')
         self._exchange_requests = exchange_requests
+        self._total_registers_sent = 0
 
     def _send_registers(self, registers):
         data_bytes = bytes(json.dumps(
@@ -26,6 +27,8 @@ class Reader:
             properties=pika.BasicProperties(delivery_mode=2)
         )
 
+        self._total_registers_sent += len(registers)
+
     def _send_flush_notification(self):
         data_bytes = bytes(json.dumps({'type': 'flush'}), encoding='utf-8')
         self._channel.basic_publish(
@@ -35,7 +38,8 @@ class Reader:
             properties=pika.BasicProperties(delivery_mode=2)
         )
 
-        logging.info("Finishing sending data to routing key: {}.".format(self._data_routing_key))
+        logging.info("Finishing sending data to routing key: {}. Total registers sent: {}"
+                     .format(self._data_routing_key, self._total_registers_sent))
 
     def start(self):
         logging.info("Starting to send data from file: {}.".format(self._path))
