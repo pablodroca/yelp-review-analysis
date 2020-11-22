@@ -19,7 +19,8 @@ class Filter:
                 sleep(2)
                 logging.info("Retrying connection to rabbit...")
 
-    def __init__(self, data_queue, sink_exchange, filter_operation, filter_key, filter_parameter):
+    def __init__(self, data_queue, sink_exchange, filter_operation, filter_key=None, filter_parameter=None,
+                 filter_key_1=None, filter_key_2=None):
         self._connect_to_rabbit()
         self._channel = self._connection.channel()
         self._data_queue = data_queue
@@ -31,14 +32,16 @@ class Filter:
         self._filter_operation = filter_operation
         self._filter_key = filter_key
         self._filter_parameter = filter_parameter
+        self._filter_key_1 = filter_key_1
+        self._filter_key_2 = filter_key_2
         self._A_R_F = []
 
     def _apply_filtering(self, data):
         return_value = False
         if self._filter_operation == "greater":
             return_value = data[self._filter_key] > self._filter_parameter
-        elif self._filter_operation == "=":
-            return_value = data[self._filter_key] == self._filter_parameter
+        elif self._filter_operation == "equal_fields":
+            return_value = data[self._filter_key_1] == data[self._filter_key_2]
 
         return return_value
 
@@ -53,7 +56,7 @@ class Filter:
         filtered_data = [data for data in data_chunk if self._apply_filtering(data)]
 
         self._A_R_F.append(filtered_data)
-        logging.info("Already filtered data: {}".format(self._A_R_F))
+        logging.info("Len of filtered data: {}".format(len(filtered_data)))
         self._channel.basic_publish(
             exchange=self._sink_exchange,
             routing_key='',

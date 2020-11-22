@@ -9,8 +9,10 @@ def parse_config_params():
         'data_queue': os.environ['DATA_QUEUE'],
         'sink_exchange': os.environ['SINK_EXCHANGE'],
         'filter_operation': os.environ['FILTER_OPERATION'],
-        'filter_key': os.environ['FILTER_KEY'],
-        'filter_parameter': int(os.environ['FILTER_PARAMETER'])
+        'filter_key': os.environ['FILTER_KEY'] if 'FILTER_KEY' in os.environ else None,
+        'filter_parameter': int(os.environ['FILTER_PARAMETER'] if 'FILTER_PARAMETER' in os.environ else None),
+        'filter_key_1': os.environ['FILTER_KEY_1'] if 'FILTER_KEY_1' in os.environ else None,
+        'filter_key_2': os.environ['FILTER_KEY_2'] if 'FILTER_KEY_2' in os.environ else None
     }
     return params
 
@@ -23,7 +25,8 @@ def main():
     ))
     filter = Filter(config_params['data_queue'], config_params['sink_exchange'],
                     config_params['filter_operation'], config_params['filter_key'],
-                    config_params['filter_parameter'])
+                    config_params['filter_parameter'], config_params['filter_key_1'],
+                    config_params['filter_key_2'])
     filter.start()
 
 

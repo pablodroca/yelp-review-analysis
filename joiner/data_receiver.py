@@ -12,7 +12,7 @@ class DataReceiver:
         while retry_connecting:
             try:
                 self._connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq')
+                    pika.ConnectionParameters(host='rabbitmq', heartbeat=10000, blocked_connection_timeout=5000)
                 )
                 retry_connecting = False
             except AMQPConnectionError:
@@ -41,7 +41,6 @@ class DataReceiver:
         if data_chunk['type'] == 'data':
             self._process_data_chunk(data_chunk['data'])
         else:
-            logging.info(data_chunk)
             logging.info("Finishing processing data")
             self._table_filled_semaphore.release()
             end_data_message = True
@@ -51,6 +50,7 @@ class DataReceiver:
         if end_data_message:
             logging.info("Waiting to process another stream.")
             self._table_filled_semaphore.acquire()
+            logging.info("Acquired semaphore to listen for other stream. Flushing old table.")
             keys = self._table_to_fill.keys()
             for key in keys:
                 del self._table_to_fill[key]

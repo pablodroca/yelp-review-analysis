@@ -49,17 +49,18 @@ class Reducer:
         self._channel.basic_publish(
             exchange='',
             routing_key=self._sink_queue_name,
-            body=data_bytes
+            body=data_bytes,
+            properties=pika.BasicProperties(expiration="900000")
         )
         self._channel.basic_publish(
             exchange='',
             routing_key=self._sink_queue_name,
-            body=flush_data_notif_bytes
+            body=flush_data_notif_bytes,
+            properties=pika.BasicProperties(expiration="900000")
         )
 
-
-        if self._unflatten_key == 'weekday':
-            logging.info(unflattened_data)
+        if self._unflatten_key == 'weekday' or self._unflatten_value_key == 'five_stars_reviews':
+            logging.info(unflattened_data[:100])
 
         self._aggregation = {}
         self._received_aggregator_data_messages = 0
