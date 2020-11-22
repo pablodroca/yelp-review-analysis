@@ -1,20 +1,34 @@
 import json
 import logging
+from time import sleep
 
 import pika
+from pika.exceptions import AMQPConnectionError
 
 
 class Aggregator:
-    def __init__(self, source_queue_name, reducer_queue_name):
-        self._connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq')
-        )
+    def _connect_to_rabbit(self):
+        retry_connecting = True
+        while retry_connecting:
+            try:
+                self._connection = pika.BlockingConnection(
+                    pika.ConnectionParameters(host='rabbitmq')
+                )
+                retry_connecting = False
+            except AMQPConnectionError:
+                logging.info("Rabbit is not ready yet...")
+                sleep(2)
+                logging.info("Retrying connection to rabbit...")
+
+    def __init__(self, source_queue_name, reducer_queue_name, key):
+        self._connect_to_rabbit()
         self._source_channel = self._connection.channel()
         self._source_queue_name = source_queue_name
         self._source_channel.queue_declare(queue=source_queue_name)
         self._reducer_channel = self._connection.channel()
         self._reducer_queue_name = reducer_queue_name
         self._reducer_channel.queue_declare(queue=reducer_queue_name)
+        self._key = key
         self._counter = {}
 
     def _flush_data(self):
@@ -22,8 +36,6 @@ class Aggregator:
             'type': 'data',
             'data': self._counter
         }), encoding='utf-8')
-
-        logging.info('Finishing processing aggregation. Results: {}'.format(self._counter))
 
         self._reducer_channel.basic_publish(
             exchange='',
@@ -35,11 +47,11 @@ class Aggregator:
         self._counter = {}
 
     def _process_data_chunk(self, data_chunk):
-        for data in data_chunk:
-            if data in self._counter:
-                self._counter[data] += 1
+        for register in data_chunk:
+            if register[self._key] in self._counter:
+                self._counter[register[self._key]] += 1
             else:
-                self._counter[data] = 1
+                self._counter[register[self._key]] = 1
 
     def _process_data(self, ch, method, properties, body):
         data_chunk = json.loads(body.decode('utf-8'))

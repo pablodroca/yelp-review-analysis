@@ -1,4 +1,4 @@
 FROM python:3.8
-COPY . /
+COPY filter /
 RUN pip3 install pika
-ENTRYPOINT python3 main.py
+ENTRYPOINT ["/bin/sh"]

@@ -21,7 +21,7 @@ class Reader:
         ), encoding='utf-8')
 
         self._channel.basic_publish(
-            exchange='',
+            exchange=self._exchange_requests,
             routing_key=self._data_routing_key,
             body=data_bytes,
             properties=pika.BasicProperties(delivery_mode=2)

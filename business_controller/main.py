@@ -3,6 +3,7 @@ import logging
 
 from business_controller import BusinessController
 
+
 def parse_config_params():
     params = {
         'business_queue': os.environ['BUSINESS_QUEUE'],
@@ -12,13 +13,14 @@ def parse_config_params():
     }
     return params
 
+
 def main():
     initialize_log()
     logging.info("Starting aggregator")
     config_params = parse_config_params()
-    aggregator = BusinessController(config_params['business_queue'], config_params['business_exchange'],
-                                    config_params['business_message_size'], config_params['exchange_incoming_business'])
-    aggregator.start()
+    business_controller = BusinessController(config_params['business_queue'], config_params['business_exchange'],
+                                             config_params['business_message_size'], config_params['exchange_incoming_business'])
+    business_controller.start()
 
 
 def initialize_log():
@@ -27,6 +29,7 @@ def initialize_log():
         level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S',
     )
+
 
 print(__name__)
 

@@ -1,14 +1,26 @@
 import json
 import logging
+from time import sleep
 
 import pika
+from pika.exceptions import AMQPConnectionError
 
 
 class BusinessController:
+    def _connect_to_rabbit(self):
+        retry_connecting = True
+        while retry_connecting:
+            try:
+                self._connection = pika.BlockingConnection(
+                    pika.ConnectionParameters(host='rabbitmq')
+                )
+                retry_connecting = False
+            except AMQPConnectionError:
+                sleep(2)
+                logging.info("Retrying connection to rabbit...")
+
     def __init__(self, business_queue, business_exchange, business_message_size, exchange_requests):
-        self._connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq')
-        )
+        self._connect_to_rabbit()
         self._business_queue_channel = self._connection.channel()
         self._business_queue_channel.exchange_declare(exchange=exchange_requests, exchange_type='direct')
 
@@ -29,7 +41,7 @@ class BusinessController:
         self._send_businesses_to_joiners(self._current_businesses)
         self._current_businesses = []
 
-        data_bytes = bytes(json.dumps({'type:', 'flush'}), encoding='utf-8')
+        data_bytes = bytes(json.dumps({'type': 'flush'}), encoding='utf-8')
 
         self._business_joiners_channel.basic_publish(
             exchange=self._business_exchange,

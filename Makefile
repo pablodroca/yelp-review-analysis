@@ -10,10 +10,13 @@ docker-image:
 	docker build -f ./review_controller/Dockerfile -t "review_controller:latest" .
 	docker build -f ./aggregator/Dockerfile -t "aggregator:latest" .
 	docker build -f ./joiner/Dockerfile -t "joiner:latest" .
+	docker build -f ./reducer/Dockerfile -t "reducer:latest" .
+	docker build -f ./sorter/Dockerfile -t "sorter:latest" .
+	docker build -f ./filter/Dockerfile -t "filter:latest" .
 .PHONY: docker-image
 
 docker-compose-up: docker-image
-	docker-compose -f docker-compose.yaml up -d --build
+	docker-compose -f docker-compose.yaml up -d --build --remove-orphans
 .PHONY: docker-compose-up
 
 docker-compose-down:

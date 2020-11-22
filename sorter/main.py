@@ -1,22 +1,24 @@
 import os
 import logging
 
-from aggregator import Aggregator
+from sorter import Sorter
+
 
 def parse_config_params():
     params = {
-        'source_queue': os.environ['SOURCE_QUEUE'],
-        'reducer_queue': os.environ['REDUCER_QUEUE'],
-        'key': os.environ['KEY']
+        'data_queue': os.environ['DATA_QUEUE'],
+        'sink_queue': os.environ['SINK_QUEUE'],
+        'quantity_to_take': int(os.environ['QUANTITY_TO_TAKE'])
     }
     return params
+
 
 def main():
     initialize_log()
     logging.info("Starting aggregator")
     config_params = parse_config_params()
-    aggregator = Aggregator(config_params['source_queue'], config_params['reducer_queue'], config_params['key'])
-    aggregator.start()
+    sorter = Sorter(config_params['data_queue'], config_params['sink_queue'], config_params['quantity_to_take'])
+    sorter.start()
 
 
 def initialize_log():
@@ -25,6 +27,7 @@ def initialize_log():
         level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S',
     )
+
 
 print(__name__)
 

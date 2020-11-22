@@ -8,29 +8,6 @@ services:
     networks:
       - pipeline_net
 
-  reader:
-    container_name: reader
-    image: reader:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - REVIEWS_PATH=/data_reviews/yelp_academic_dataset_reviews.json
-      - REVIEWS_MESSAGE_SIZE=100
-      - REVIEWS_ROUTING_KEY=reviews_queue
-      - BUSINESS_PATH=/data_business/yelp_academic_dataset_business.json
-      - BUSINESS_MESSAGE_SIZE=100
-      - BUSINESS_ROUTING_KEY=business_queue
-      - EXCHANGE_INCOMING_BUSINESS=exchange_incoming_business
-      - EXCHANGE_INCOMING_REVIEWS=exchange_incoming_reviews
-    volumes:
-    - "./reduced_data/reviews:/data_reviews"
-    - "./data/business:/data_business"
-    depends_on:
-      - rabbitmq
-    restart: on-failure
-    networks:
-      - pipeline_net
-
   business_controller:
     container_name: business_controller
     image: business_controller:latest
@@ -41,7 +18,6 @@ services:
       - BUSINESS_EXCHANGE=business_exchange
       - BUSINESS_MESSAGE_SIZE=1025
       - EXCHANGE_INCOMING_BUSINESS=exchange_incoming_business
-    restart: on-failure
     networks:
       - pipeline_net
 
@@ -56,36 +32,40 @@ services:
       - WEEKDAY_AGGREGATORS_QUANTITY=2
       - REVIEWS_MESSAGE_SIZE=1025
       - EXCHANGE_INCOMING_REVIEWS=exchange_incoming_reviews
-    restart: on-failure
+      - FUNNY_REVIEWS_QUEUE=funny_reviews_queue
+      - FUNNY_REVIEWS_JOINERS_QUANTITY=1
+      - USER_ID_QUEUE=user_id_queue
+      - USER_ID_AGGREGATORS_QUANTITY=2
+      - FIVE_STARS_USER_ID_QUEUE=five_stars_user_id_queue
+      - FIVE_STARS_USER_ID_AGGREGATORS_QUANTITY=2
     networks:
       - pipeline_net
-
-  aggregator_1:
-    container_name: aggregator_1
+  aggregator_weekday_1:
+    container_name: aggregator_weekday_1
     image: aggregator:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
       - SOURCE_QUEUE=weekday_queue
       - REDUCER_QUEUE=weekday_reducer_queue
-    restart: on-failure
+      - KEY=weekday
     networks:
       - pipeline_net
 
-  aggregator_2:
-    container_name: aggregator_2
+  aggregator_weekday_2:
+    container_name: aggregator_weekday_2
     image: aggregator:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
       - SOURCE_QUEUE=weekday_queue
       - REDUCER_QUEUE=weekday_reducer_queue
-    restart: on-failure
+      - KEY=weekday
     networks:
       - pipeline_net
 
-  reducer:
-    container_name: reducer
+  reducer_weekday:
+    container_name: reducer_weekday
     image: reducer:latest
     entrypoint: python3 /main.py
     environment:
@@ -93,20 +73,181 @@ services:
       - AGGREGATED_DATA_QUEUE=weekday_reducer_queue
       - SINK_QUEUE=sink_queue
       - AGGREGATORS_QUANTITY=2
-    restart: on-failure
+      - UNFLATTEN_KEY=weekday
+      - UNFLATTEN_VALUE_KEY=total_reviews
+
     networks:
       - pipeline_net
 
-  joiner:
-    container_name: joiner
+  joiner_city:
+    container_name: joiner_city
     image: joiner:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
       - CRITICAL_DATA_EXCHANGE=business_exchange
-    restart: on-failure
+      - DATA_TO_JOIN_QUEUE=funny_reviews_queue
+      - JOIN_KEY=business_id
+      - FLUSH_MESSAGES_QUANTITY=2
+      - OUTPUT_QUEUE=joined_cities_queue
     networks:
       - pipeline_net
+
+  aggregator_city_1:
+    container_name: aggregator_city_1
+    image: aggregator:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SOURCE_QUEUE=joined_cities_queue
+      - REDUCER_QUEUE=city_reducer_queue
+      - KEY=city
+    networks:
+      - pipeline_net
+
+  aggregator_city_2:
+    container_name: aggregator_city_2
+    image: aggregator:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SOURCE_QUEUE=joined_cities_queue
+      - REDUCER_QUEUE=city_reducer_queue
+      - KEY=city
+    networks:
+      - pipeline_net
+
+  reducer_city:
+    container_name: reducer_city
+    image: reducer:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - AGGREGATED_DATA_QUEUE=city_reducer_queue
+      - SINK_QUEUE=aggregated_city_queue
+      - AGGREGATORS_QUANTITY=2
+      - UNFLATTEN_KEY=city
+      - UNFLATTEN_VALUE_KEY=total_funny_reviews
+    networks:
+      - pipeline_net
+
+  city_sorter:
+    container_name: city_sorter
+    image: sorter:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATA_QUEUE=aggregated_city_queue
+      - SINK_QUEUE=sink_queue
+      - QUANTITY_TO_TAKE=10
+    networks:
+      - pipeline_net
+
+  aggregator_user_id_1:
+    container_name: aggregator_user_id_1
+    image: aggregator:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SOURCE_QUEUE=user_id_queue
+      - REDUCER_QUEUE=user_id_reducer_queue
+      - KEY=user_id
+    networks:
+      - pipeline_net
+
+  aggregator_user_id_2:
+    container_name: aggregator_user_id_2
+    image: aggregator:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SOURCE_QUEUE=user_id_queue
+      - REDUCER_QUEUE=user_id_reducer_queue
+      - KEY=user_id
+    networks:
+      - pipeline_net
+
+  reducer_user_id:
+    container_name: reducer_user_id
+    image: reducer:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - AGGREGATED_DATA_QUEUE=user_id_reducer_queue
+      - SINK_QUEUE=user_id_count_queue
+      - AGGREGATORS_QUANTITY=2
+      - UNFLATTEN_KEY=user_id
+      - UNFLATTEN_VALUE_KEY=total_reviews
+    networks:
+      - pipeline_net
+
+  filter_fifty_reviews:
+    container_name: filter_fifty_reviews
+    image: filter:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATA_QUEUE=user_id_count_queue
+      - SINK_EXCHANGE=users_fifty_reviews_exchange
+      - FILTER_OPERATION=greater
+      - FILTER_KEY=total_reviews
+      - FILTER_PARAMETER=50
+    networks:
+      - pipeline_net
+
+  aggregator_user_id_5_stars_1:
+    container_name: aggregator_user_id_5_stars_1
+    image: aggregator:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SOURCE_QUEUE=five_stars_user_id_queue
+      - REDUCER_QUEUE=five_stars_user_id_reducer_queue
+      - KEY=user_id
+    networks:
+      - pipeline_net
+
+  aggregator_user_id_5_stars_2:
+    container_name: aggregator_user_id_5_stars_2
+    image: aggregator:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SOURCE_QUEUE=five_stars_user_id_queue
+      - REDUCER_QUEUE=five_stars_user_id_reducer_queue
+      - KEY=user_id
+    networks:
+      - pipeline_net
+
+  reducer_user_id_5_stars:
+    container_name: reducer_user_id_5_stars
+    image: reducer:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - AGGREGATED_DATA_QUEUE=five_stars_user_id_reducer_queue
+      - SINK_QUEUE=users_5_stars
+      - AGGREGATORS_QUANTITY=2
+      - UNFLATTEN_KEY=user_id
+      - UNFLATTEN_VALUE_KEY=five_stars_reviews
+    networks:
+      - pipeline_net
+
+  joiner_user_id:
+    container_name: joiner_user_id
+    image: joiner:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CRITICAL_DATA_EXCHANGE=users_fifty_reviews_exchange
+      - DATA_TO_JOIN_QUEUE=users_5_stars
+      - JOIN_KEY=user_id
+      - FLUSH_MESSAGES_QUANTITY=2
+      - OUTPUT_QUEUE=asd_output_queue
+    networks:
+      - pipeline_net
+
+
 
 
 networks:
