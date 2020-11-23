@@ -1,22 +1,26 @@
 import os
 import logging
 
-from aggregator import Aggregator
+from multikeyaggregator import MultiKeyAggregator
+
 
 def parse_config_params():
     params = {
         'source_queue': os.environ['SOURCE_QUEUE'],
         'reducer_queue': os.environ['REDUCER_QUEUE'],
-        'key': os.environ['KEY']
+        'principal_key': os.environ['PRINCIPAL_KEY'],
+        'secondary_key': os.environ['SECONDARY_KEY']
     }
     return params
+
 
 def main():
     initialize_log()
     logging.info("Starting aggregator")
     config_params = parse_config_params()
-    aggregator = Aggregator(config_params['source_queue'], config_params['reducer_queue'], config_params['key'])
-    aggregator.start()
+    multiKeyAggregator = MultiKeyAggregator(config_params['source_queue'], config_params['reducer_queue'],
+                                            config_params['principal_key'], config_params['secondary_key'])
+    multiKeyAggregator.start()
 
 
 def initialize_log():
@@ -25,6 +29,7 @@ def initialize_log():
         level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S',
     )
+
 
 print(__name__)
 

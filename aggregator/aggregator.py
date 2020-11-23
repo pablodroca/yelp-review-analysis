@@ -22,12 +22,11 @@ class Aggregator:
 
     def __init__(self, source_queue_name, reducer_queue_name, key):
         self._connect_to_rabbit()
-        self._source_channel = self._connection.channel()
+        self._channel = self._connection.channel()
         self._source_queue_name = source_queue_name
-        self._source_channel.queue_declare(queue=source_queue_name)
-        self._reducer_channel = self._connection.channel()
+        self._channel.queue_declare(queue=source_queue_name)
         self._reducer_queue_name = reducer_queue_name
-        self._reducer_channel.queue_declare(queue=reducer_queue_name)
+        self._channel.queue_declare(queue=reducer_queue_name)
         self._key = key
         self._counter = {}
 
@@ -37,7 +36,7 @@ class Aggregator:
             'data': self._counter
         }), encoding='utf-8')
 
-        self._reducer_channel.basic_publish(
+        self._channel.basic_publish(
             exchange='',
             routing_key=self._reducer_queue_name,
             body=data_bytes,
@@ -63,6 +62,6 @@ class Aggregator:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def start(self):
-        self._source_channel.basic_consume(queue=self._source_queue_name,
-                                           on_message_callback=self._process_data)
-        self._source_channel.start_consuming()
+        self._channel.basic_consume(queue=self._source_queue_name,
+                                    on_message_callback=self._process_data)
+        self._channel.start_consuming()

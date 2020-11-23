@@ -16,7 +16,9 @@ def parse_config_params():
         'user_id_queue': os.environ['USER_ID_QUEUE'],
         'user_id_aggregators_quantity': int(os.environ['USER_ID_AGGREGATORS_QUANTITY']),
         'five_stars_user_id_queue': os.environ['FIVE_STARS_USER_ID_QUEUE'],
-        'five_stars_user_id_aggregators_quantity': int(os.environ['FIVE_STARS_USER_ID_AGGREGATORS_QUANTITY'])
+        'five_stars_user_id_aggregators_quantity': int(os.environ['FIVE_STARS_USER_ID_AGGREGATORS_QUANTITY']),
+        'text_hash_queue': os.environ['TEXT_HASH_QUEUE'],
+        'text_hash_aggregators_quantity': int(os.environ['TEXT_HASH_AGGREGATORS_QUANTITY'])
     }
     return params
 
@@ -34,7 +36,9 @@ def main():
                                          config_params['user_id_queue'],
                                          config_params['user_id_aggregators_quantity'],
                                          config_params['five_stars_user_id_queue'],
-                                         config_params['five_stars_user_id_aggregators_quantity'])
+                                         config_params['five_stars_user_id_aggregators_quantity'],
+                                         config_params['text_hash_queue'],
+                                         config_params['text_hash_aggregators_quantity'])
     review_controller.start()
 
 

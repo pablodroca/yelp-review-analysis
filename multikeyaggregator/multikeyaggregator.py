@@ -6,7 +6,7 @@ import pika
 from pika.exceptions import AMQPConnectionError
 
 
-class Aggregator:
+class MultiKeyAggregator:
     def _connect_to_rabbit(self):
         retry_connecting = True
         while retry_connecting:
@@ -20,7 +20,7 @@ class Aggregator:
                 sleep(2)
                 logging.info("Retrying connection to rabbit...")
 
-    def __init__(self, source_queue_name, reducer_queue_name, key):
+    def __init__(self, source_queue_name, reducer_queue_name, principal_key, secondary_key):
         self._connect_to_rabbit()
         self._source_channel = self._connection.channel()
         self._source_queue_name = source_queue_name
@@ -28,7 +28,8 @@ class Aggregator:
         self._reducer_channel = self._connection.channel()
         self._reducer_queue_name = reducer_queue_name
         self._reducer_channel.queue_declare(queue=reducer_queue_name)
-        self._key = key
+        self._principal_key = principal_key
+        self._secondary_key = secondary_key
         self._counter = {}
 
     def _flush_data(self):
@@ -44,14 +45,19 @@ class Aggregator:
             properties=pika.BasicProperties(delivery_mode=2)
         )
 
+        logging.info("Finished processing aggregation.")
+
         self._counter = {}
 
     def _process_data_chunk(self, data_chunk):
         for register in data_chunk:
-            if register[self._key] in self._counter:
-                self._counter[register[self._key]] += 1
+            if register[self._principal_key] in self._counter:
+                if register[self._secondary_key] in self._counter[register[self._principal_key]]:
+                    self._counter[register[self._principal_key]][register[self._secondary_key]] += 1
+                else:
+                    self._counter[register[self._principal_key]][register[self._secondary_key]] = 1
             else:
-                self._counter[register[self._key]] = 1
+                self._counter[register[self._principal_key]] = {register[self._secondary_key]: 1}
 
     def _process_data(self, ch, method, properties, body):
         data_chunk = json.loads(body.decode('utf-8'))

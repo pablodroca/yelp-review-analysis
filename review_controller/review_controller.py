@@ -4,6 +4,7 @@ import logging
 from time import sleep
 
 import pika
+import hashlib
 from pika.exceptions import AMQPConnectionError
 
 
@@ -23,7 +24,8 @@ class ReviewController:
     def __init__(self, review_queue, weekday_queue, weekday_aggregators_quantity, reviews_message_size,
                  exchange_requests, funny_reviews_queue, funny_reviews_joiners_quantity,
                  user_id_queue, user_id_aggregators_quantity,
-                 five_stars_user_id_queue, five_stars_user_id_aggregators_quantity):
+                 five_stars_user_id_queue, five_stars_user_id_aggregators_quantity,
+                 text_hash_queue, text_hash_aggregators_quantity):
         self._connect_to_rabbit()
         self._channel = self._connection.channel()
         self._channel.exchange_declare(exchange=exchange_requests, exchange_type='direct')
@@ -40,12 +42,16 @@ class ReviewController:
         self._user_id_queue = user_id_queue
         self._channel.queue_declare(queue=user_id_queue)
 
+        self._text_hash_queue = text_hash_queue
+        self._channel.queue_declare(queue=text_hash_queue)
+
         self._five_stars_user_id_queue = five_stars_user_id_queue
         self._five_stars_user_id_aggregators_quantity = five_stars_user_id_aggregators_quantity
 
         self._weekday_aggregators_quantity = weekday_aggregators_quantity
         self._funny_reviews_joiner_quantity = funny_reviews_joiners_quantity
         self._user_id_aggregators_quantity = user_id_aggregators_quantity
+        self._text_hash_aggregators_quantity = text_hash_aggregators_quantity
         self._reviews_message_size = reviews_message_size
         self._current_reviews = []
         self._total_reviews = 0
@@ -67,6 +73,7 @@ class ReviewController:
         self._send_funny_reviews_to_joiners(reviews)
         self._send_id_to_aggregators(reviews)
         self._send_id_five_stars_to_aggregators(reviews)
+        self._send_hash_to_aggregators(reviews)
 
     def _flush_data(self):
         self._deliver_reviews(self._current_reviews)
@@ -86,6 +93,9 @@ class ReviewController:
 
         for _ in range(self._five_stars_user_id_aggregators_quantity):
             self._publish(self._five_stars_user_id_queue, data_bytes)
+
+        for _ in range(self._text_hash_aggregators_quantity):
+            self._publish(self._text_hash_queue, data_bytes)
 
         logging.info("Finishing processing stream data.")
 
@@ -113,6 +123,12 @@ class ReviewController:
             'data', [{'user_id': review['user_id']} for review in reviews if int(review['stars']) == 5]
         )
         self._publish(self._five_stars_user_id_queue, data_bytes)
+
+    def _send_hash_to_aggregators(self, reviews):
+        data_bytes = self._data_bytes(
+            'data', [{'user_id': review['user_id'], 'text_hash': hashlib.md5(review['text'].encode('utf-8')).hexdigest()} for review in reviews]
+        )
+        self._publish(self._text_hash_queue, data_bytes)
 
     def _process_data_chunk(self, received_reviews):
         if len(self._current_reviews) + len(received_reviews) >= self._reviews_message_size:
