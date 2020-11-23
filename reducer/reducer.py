@@ -59,8 +59,8 @@ class Reducer:
             properties=pika.BasicProperties(expiration="900000")
         )
 
-        if self._unflatten_key == 'weekday' or self._unflatten_value_key == 'five_stars_reviews':
-            logging.info(unflattened_data[:100])
+        if self._unflatten_key == 'weekday':
+            logging.info(unflattened_data)
 
         self._aggregation = {}
         self._received_aggregator_data_messages = 0

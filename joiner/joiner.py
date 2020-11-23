@@ -74,8 +74,6 @@ class Joiner:
 
     def _process_data(self, ch, method, properties, body):
         data_to_join = json.loads(body.decode('utf-8'))
-        if 'data' in data_to_join:
-            logging.info("Received: {}".format(data_to_join['data'][:100]))
         end_stream_message = False
         if data_to_join['type'] == 'data':
             self._process_data_chunk(data_to_join['data'])
