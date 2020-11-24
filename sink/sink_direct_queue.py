@@ -12,18 +12,18 @@ class SinkDirectQueue:
         while retry_connecting:
             try:
                 self._connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq')
+                    pika.ConnectionParameters(host='rabbitmq', heartbeat=10000, blocked_connection_timeout=5000)
                 )
                 retry_connecting = False
             except AMQPConnectionError:
                 sleep(2)
                 logging.info("Retrying connection to rabbit...")
 
-    def __init__(self, queue_name, final_results_queue, metric_name, push_metrics_barrier):
+    def __init__(self, data_queue, final_results_queue, metric_name, push_metrics_barrier):
         self._connect_to_rabbit()
         self._channel = self._connection.channel()
-        self._data_queue = queue_name
-        self._channel.queue_declare(queue_name)
+        self._data_queue = data_queue
+        self._channel.queue_declare(data_queue)
         self._final_results_queue = final_results_queue
         self._channel.queue_declare(final_results_queue)
         self._metric_name = metric_name

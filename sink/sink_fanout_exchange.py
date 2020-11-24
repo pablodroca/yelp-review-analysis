@@ -12,7 +12,7 @@ class SinkFanoutExchange:
         while retry_connecting:
             try:
                 self._connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq')
+                    pika.ConnectionParameters(host='rabbitmq', heartbeat=10000, blocked_connection_timeout=5000)
                 )
                 retry_connecting = False
             except AMQPConnectionError:

@@ -34,7 +34,6 @@ class Filter:
         self._filter_parameter = filter_parameter
         self._filter_key_1 = filter_key_1
         self._filter_key_2 = filter_key_2
-        self._A_R_F = []
 
     def _apply_filtering(self, data):
         return_value = False
@@ -47,7 +46,7 @@ class Filter:
             return_value = len(dict_value) == 1 and dict_value[list(dict_value.keys())[0]] >= self._filter_parameter
         return return_value
 
-    def _send_flush_notification(self):
+    def _flush_data(self):
         self._channel.basic_publish(
             exchange=self._sink_exchange,
             routing_key='',
@@ -57,7 +56,6 @@ class Filter:
     def _process_data_chunk(self, data_chunk):
         filtered_data = [data for data in data_chunk if self._apply_filtering(data)]
 
-        self._A_R_F.append(filtered_data)
         self._channel.basic_publish(
             exchange=self._sink_exchange,
             routing_key='',
@@ -70,7 +68,7 @@ class Filter:
         if data_chunk['type'] == 'data':
             self._process_data_chunk(data_chunk['data'])
         else:
-            self._send_flush_notification()
+            self._flush_data()
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def start(self):

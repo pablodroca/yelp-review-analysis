@@ -34,12 +34,6 @@ class MultiKeyReducer:
         self._unflatten_key = unflatten_key
         self._unflatten_value_key = unflatten_value_key
 
-    '''def _filtered_data(self):
-        filtered_data = {}
-        for key, dict_value in self._aggregation.items():
-            if len(dict_value) == 1 and dict_value[list(dict_value.keys())[0]] >= 5:
-                filtered_data[key] = dict_value
-        return filtered_data'''
 
     def _flush_data(self):
         unflattened_data = []
@@ -62,7 +56,7 @@ class MultiKeyReducer:
         self._aggregation = {}
         self._received_aggregator_data_messages = 0
 
-    def _process_data_chunk(self, data_aggregation):
+    def _process_multi_level_aggregation(self, data_aggregation):
         for primary_key, dict_value in data_aggregation.items():
             if primary_key in self._aggregation:
                 for secondary_key, v in dict_value.items():
@@ -76,7 +70,7 @@ class MultiKeyReducer:
     def _process_data(self, ch, method, properties, body):
         data_aggregation = json.loads(body.decode('utf-8'))
         self._received_aggregator_data_messages += 1
-        self._process_data_chunk(data_aggregation['data'])
+        self._process_multi_level_aggregation(data_aggregation['data'])
         if self._received_aggregator_data_messages == self._aggregators_quantity:
             self._flush_data()
 

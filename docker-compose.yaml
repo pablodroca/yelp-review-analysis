@@ -30,7 +30,7 @@ services:
       - REVIEWS_QUEUE=reviews_queue
       - WEEKDAY_QUEUE=weekday_queue
       - WEEKDAY_AGGREGATORS_QUANTITY=2
-      - REVIEWS_MESSAGE_SIZE=10000
+      - REVIEWS_MESSAGE_SIZE=20000
       - EXCHANGE_INCOMING_REVIEWS=exchange_incoming_reviews
       - FUNNY_REVIEWS_QUEUE=funny_reviews_queue
       - FUNNY_REVIEWS_JOINERS_QUANTITY=1
@@ -78,7 +78,6 @@ services:
       - AGGREGATORS_QUANTITY=2
       - UNFLATTEN_KEY=weekday
       - UNFLATTEN_VALUE_KEY=total_reviews
-
     networks:
       - pipeline_net
 
@@ -91,8 +90,8 @@ services:
       - CRITICAL_DATA_EXCHANGE=business_exchange
       - DATA_TO_JOIN_QUEUE=funny_reviews_queue
       - JOIN_KEY=business_id
-      - FLUSH_MESSAGES_QUANTITY=2
       - OUTPUT_QUEUE=joined_cities_queue
+      - FLUSH_MESSAGES_QUANTITY=2
     networks:
       - pipeline_net
 
