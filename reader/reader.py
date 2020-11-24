@@ -2,8 +2,9 @@ import json
 import pika
 import logging
 
+
 class Reader:
-    def __init__(self, path, message_size, data_routing_key, exchange_requests, connection):
+    def __init__(self, path, message_size, data_routing_key, exchange_requests):
         self._path = path
         self._message_size = message_size
         self._connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))

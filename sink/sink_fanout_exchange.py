@@ -6,7 +6,7 @@ import pika
 from pika.exceptions import AMQPConnectionError
 
 
-class SinkDirectQueue:
+class SinkFanoutExchange:
     def _connect_to_rabbit(self):
         retry_connecting = True
         while retry_connecting:
@@ -19,13 +19,14 @@ class SinkDirectQueue:
                 sleep(2)
                 logging.info("Retrying connection to rabbit...")
 
-    def __init__(self, queue_name, final_results_queue, metric_name, push_metrics_barrier):
+    def __init__(self, exchange_name, final_results_queue, metric_name, push_metrics_barrier):
         self._connect_to_rabbit()
         self._channel = self._connection.channel()
-        self._data_queue = queue_name
-        self._channel.queue_declare(queue_name)
+        self._channel.exchange_declare(exchange=exchange_name, exchange_type='fanout')
+        self._data_queue = self._channel.queue_declare(queue='', exclusive=True).method.queue
+        self._channel.queue_bind(exchange=exchange_name, queue=self._data_queue)
+
         self._final_results_queue = final_results_queue
-        self._channel.queue_declare(final_results_queue)
         self._metric_name = metric_name
         self._push_metrics_barrier = push_metrics_barrier
 

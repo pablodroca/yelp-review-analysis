@@ -14,6 +14,7 @@ docker-image:
 	docker build -f ./filter/Dockerfile -t "filter:latest" .
 	docker build -f ./multikeyaggregator/Dockerfile -t "multikeyaggregator:latest" .
 	docker build -f ./multikeyreducer/Dockerfile -t "multikeyreducer:latest" .
+	docker build -f ./sink/Dockerfile -t "sink:latest" .
 .PHONY: docker-image
 
 docker-compose-up: docker-image

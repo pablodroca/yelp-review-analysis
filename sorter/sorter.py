@@ -26,10 +26,17 @@ class Sorter:
         self._data_queue = data_queue
         self._channel.queue_declare(queue=data_queue)
         self._quantity_to_take = quantity_to_take
+        self._channel.queue_declare(queue=sink_queue)
+        self._sink_queue = sink_queue
 
     def _send_sorted_data(self, data):
         sorted_data = sorted(data, key=lambda x: x['total_funny_reviews'], reverse=True)[:self._quantity_to_take]
         logging.info("Sending sorted data: {}".format(sorted_data))
+        self._channel.basic_publish(
+            exchange='',
+            routing_key=self._sink_queue,
+            body=bytes(json.dumps({'type': 'data', 'data': sorted_data}), encoding='utf-8')
+        )
 
     def _process_data(self, ch, method, properties, body):
         data = json.loads(body.decode('utf-8'))

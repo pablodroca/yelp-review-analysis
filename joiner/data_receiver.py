@@ -12,7 +12,7 @@ class DataReceiver:
         while retry_connecting:
             try:
                 self._connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq', heartbeat=10000, blocked_connection_timeout=5000)
+                    pika.ConnectionParameters(host='rabbitmq', heartbeat=20000, blocked_connection_timeout=10000)
                 )
                 retry_connecting = False
             except AMQPConnectionError:
@@ -29,7 +29,6 @@ class DataReceiver:
         self._table_to_fill = table_to_fill
         self._table_filled_semaphore = table_filled_semaphore
         self._join_key = join_key
-        self._consumer_tag = None
 
     def _process_data_chunk(self, registers):
         for register in registers:
@@ -51,11 +50,9 @@ class DataReceiver:
             logging.info("Waiting to process another stream.")
             self._table_filled_semaphore.acquire()
             logging.info("Acquired semaphore to listen for other stream. Flushing old table.")
-            keys = self._table_to_fill.keys()
-            for key in keys:
-                del self._table_to_fill[key]
+            self._table_to_fill.clear()
 
     def start(self):
         logging.info("Starting to listen for critical data for joining.")
-        self._consumer_tag = self._channel.basic_consume(queue=self._queue_name, on_message_callback=self._process_data)
+        self._channel.basic_consume(queue=self._queue_name, on_message_callback=self._process_data)
         self._channel.start_consuming()

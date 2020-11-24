@@ -58,7 +58,6 @@ class Filter:
         filtered_data = [data for data in data_chunk if self._apply_filtering(data)]
 
         self._A_R_F.append(filtered_data)
-        logging.info("Len of filtered data: {}".format(filtered_data))
         self._channel.basic_publish(
             exchange=self._sink_exchange,
             routing_key='',
