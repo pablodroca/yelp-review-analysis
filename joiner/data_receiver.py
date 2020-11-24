@@ -1,5 +1,6 @@
 import json
 import logging
+import socket
 from time import sleep
 
 import pika
@@ -18,6 +19,10 @@ class DataReceiver:
             except AMQPConnectionError:
                 sleep(2)
                 logging.info("Retrying connection to rabbit...")
+            except OSError:
+                sleep(2)
+                logging.info("Retrying connection to rabbit...")
+
 
     def __init__(self, critical_data_exchange, table_to_fill, table_filled_semaphore, join_key):
         self._connect_to_rabbit()

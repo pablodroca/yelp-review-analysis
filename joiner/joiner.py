@@ -25,6 +25,9 @@ class Joiner:
             except AMQPConnectionError:
                 sleep(2)
                 logging.info("Retrying connection to rabbit...")
+            except OSError:
+                sleep(2)
+                logging.info("Retrying connection to rabbit...")
 
     def __init__(self, data_to_join_queue, filled_table, table_filled_semaphore, join_key,
                  output_queue, flush_messages_quantity):

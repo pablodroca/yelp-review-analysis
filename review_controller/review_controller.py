@@ -20,6 +20,9 @@ class ReviewController:
             except AMQPConnectionError:
                 sleep(2)
                 logging.info("Retrying connection to rabbit...")
+            except OSError:
+                sleep(2)
+                logging.info("Retrying connection to rabbit...")
 
     def __init__(self, review_queue, weekday_queue, weekday_aggregators_quantity, reviews_message_size,
                  exchange_requests, funny_reviews_queue, funny_reviews_joiners_quantity,

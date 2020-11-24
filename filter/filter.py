@@ -18,6 +18,9 @@ class Filter:
             except AMQPConnectionError:
                 sleep(2)
                 logging.info("Retrying connection to rabbit...")
+            except OSError:
+                sleep(2)
+                logging.info("Retrying connection to rabbit...")
 
     def __init__(self, data_queue, sink_exchange, filter_operation, filter_key=None, filter_parameter=None,
                  filter_key_1=None, filter_key_2=None):

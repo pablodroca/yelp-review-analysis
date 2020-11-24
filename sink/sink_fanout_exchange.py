@@ -18,6 +18,9 @@ class SinkFanoutExchange:
             except AMQPConnectionError:
                 sleep(2)
                 logging.info("Retrying connection to rabbit...")
+            except OSError:
+                sleep(2)
+                logging.info("Retrying connection to rabbit...")
 
     def __init__(self, exchange_name, final_results_queue, metric_name, push_metrics_barrier):
         self._connect_to_rabbit()

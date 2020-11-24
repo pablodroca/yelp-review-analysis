@@ -18,6 +18,9 @@ class BusinessController:
             except AMQPConnectionError:
                 sleep(2)
                 logging.info("Retrying connection to rabbit...")
+            except OSError:
+                sleep(2)
+                logging.info("Retrying connection to rabbit...")
 
     def __init__(self, business_queue, business_exchange, business_message_size, exchange_requests):
         self._connect_to_rabbit()

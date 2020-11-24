@@ -18,6 +18,9 @@ class Reducer:
             except AMQPConnectionError:
                 sleep(2)
                 logging.info("Retrying connection to rabbit...")
+            except OSError:
+                sleep(2)
+                logging.info("Retrying connection to rabbit...")
 
     def __init__(self, aggregated_data_queue_name, sink_queue_name, aggregators_quantity, unflatten_key,
                  unflatten_value_key):

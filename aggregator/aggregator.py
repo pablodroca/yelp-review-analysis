@@ -19,6 +19,9 @@ class Aggregator:
                 logging.info("Rabbit is not ready yet...")
                 sleep(2)
                 logging.info("Retrying connection to rabbit...")
+            except OSError:
+                sleep(2)
+                logging.info("Retrying connection to rabbit...")
 
     def __init__(self, source_queue_name, reducer_queue_name, key):
         self._connect_to_rabbit()

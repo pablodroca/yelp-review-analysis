@@ -19,6 +19,9 @@ class Sorter:
             except AMQPConnectionError:
                 sleep(2)
                 logging.info("Retrying connection to rabbit...")
+            except OSError:
+                sleep(2)
+                logging.info("Retrying connection to rabbit...")
 
     def __init__(self, data_queue, sink_queue, quantity_to_take):
         self._connect_to_rabbit()
