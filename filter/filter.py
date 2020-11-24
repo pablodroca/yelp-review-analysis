@@ -12,7 +12,7 @@ class Filter:
         while retry_connecting:
             try:
                 self._connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq')
+                    pika.ConnectionParameters(host='rabbitmq', heartbeat=10000, blocked_connection_timeout=5000)
                 )
                 retry_connecting = False
             except AMQPConnectionError:
@@ -42,10 +42,12 @@ class Filter:
             return_value = data[self._filter_key] > self._filter_parameter
         elif self._filter_operation == "equal_fields":
             return_value = data[self._filter_key_1] == data[self._filter_key_2]
-
+        elif self._filter_operation == "multi_key_special_filter":
+            dict_value = list(data.values())[1]
+            return_value = len(dict_value) == 1 and dict_value[list(dict_value.keys())[0]] >= self._filter_parameter
         return return_value
 
-    def _send_flush_notif(self):
+    def _send_flush_notification(self):
         self._channel.basic_publish(
             exchange=self._sink_exchange,
             routing_key='',
@@ -56,7 +58,7 @@ class Filter:
         filtered_data = [data for data in data_chunk if self._apply_filtering(data)]
 
         self._A_R_F.append(filtered_data)
-        logging.info("Len of filtered data: {}".format(len(filtered_data)))
+        logging.info("Len of filtered data: {}".format(filtered_data))
         self._channel.basic_publish(
             exchange=self._sink_exchange,
             routing_key='',
@@ -64,14 +66,15 @@ class Filter:
         )
 
     def _process_data(self, ch, method, properties, body):
+        logging.info("Data arrived to filter.")
         data_chunk = json.loads(body.decode('utf-8'))
         if data_chunk['type'] == 'data':
             self._process_data_chunk(data_chunk['data'])
         else:
-            self._send_flush_notif()
+            self._send_flush_notification()
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def start(self):
-        self._channel.basic_consume(queue=self._data_queue,
-                                    on_message_callback=self._process_data)
+        logging.info("Starting to listen for data to apply filtering.")
+        self._channel.basic_consume(queue=self._data_queue, on_message_callback=self._process_data)
         self._channel.start_consuming()

@@ -8,7 +8,9 @@ def parse_config_params():
     params = {
         'aggregated_data_queue': os.environ['AGGREGATED_DATA_QUEUE'],
         'sink_queue': os.environ['SINK_QUEUE'],
-        'aggregators_quantity': int(os.environ['AGGREGATORS_QUANTITY'])
+        'aggregators_quantity': int(os.environ['AGGREGATORS_QUANTITY']),
+        'unflatten_key': os.environ['UNFLATTEN_KEY'],
+        'unflatten_value_key': os.environ['UNFLATTEN_VALUE_KEY']
     }
     return params
 
@@ -18,7 +20,8 @@ def main():
     logging.info("Starting multi key reducer.")
     config_params = parse_config_params()
     multiKeyReducer = MultiKeyReducer(config_params['aggregated_data_queue'], config_params['sink_queue'],
-                                      config_params['aggregators_quantity'])
+                                      config_params['aggregators_quantity'], config_params['unflatten_key'],
+                                      config_params['unflatten_value_key'])
     multiKeyReducer.start()
 
 
